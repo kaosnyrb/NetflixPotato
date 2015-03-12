@@ -1,0 +1,31 @@
+<!doctype html>
+<!--
+ This page is shown when the extension button is clicked, because the
+ "browser_action" field in manifest.json contains the "default_popup" key with
+ value "popup.html".
+ -->
+<html>
+  <head>
+    <title>Netflix Potato Popup</title>
+    <style>
+	body { min-width: 500px; text-align: center; }
+    </style>
+
+    <!--
+      - JavaScript and HTML must be in separate files: see our Content Security
+      - Policy documentation[1] for details and explanation.
+      -
+      - [1]: https://developer.chrome.com/extensions/contentSecurityPolicy
+     -->
+    <script src="popup.js"></script>
+  </head>
+  <body>
+	<button id="button">Add Current Page Series</button>
+	<button id="clearbutton">Clear List</button>
+	<h3>Series:</h3>
+    <div id="status"></div>
+	<button id="play">Play</button>
+    
+  </body>
+</html>
+
