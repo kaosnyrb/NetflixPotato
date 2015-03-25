@@ -25,6 +25,11 @@ function getCurrentTabUrl(callback) {
 function getStorage() {
 	chrome.storage.sync.get(['secretMessage'], function(data) {
 		console.log("The secret message:", data.secretMessage);
+		if ( data.secretMessage === undefined) {
+			TestArray = [];
+			setStorage(TestArray);
+			getStorage();
+		}
 		TestArray = data.secretMessage;
 		renderStatus();
 	});
