@@ -1,5 +1,7 @@
-var TestArray = []
+var IDArray = []
+var SeriesNameArray = []
 var re = /(\d+)/; 
+var titlere = /^Watch+(.*)+(Online)/;
 
 function getCurrentTabUrl(callback) {
   var queryInfo = {
@@ -10,43 +12,71 @@ function getCurrentTabUrl(callback) {
   chrome.tabs.query(queryInfo, function(tabs) {
     var tab = tabs[0];
     var url = tab.url;
+	var title = tab.title;
 	if ( url.indexOf("http://www.netflix.com/WiMovie/") > -1 )
 	{
 		callback(tab);
 		var m = re.exec(url)
-		TestArray.push(m[0]);
-		getStorage();
-		setStorage(TestArray);
+		var t = titlere.exec(title);
+		IDArray.push(m[0]);
+		SeriesNameArray.push(t[1]);
+		setStorage();
 		getStorage();
 	}
   });
 }
 
 function getStorage() {
-	chrome.storage.sync.get(['secretMessage'], function(data) {
-		console.log("The secret message:", data.secretMessage);
-		if ( data.secretMessage === undefined) {
-			TestArray = [];
-			setStorage(TestArray);
-			getStorage();
+	chrome.storage.sync.get(['ids','names'], function(data) {
+		console.log("Episode Array:", data.ids);
+		if ( data.ids === undefined ||  data.names === undefined) {
+			IDArray = [];
+			SeriesNameArray = [];
+			setStorage();
 		}
-		TestArray = data.secretMessage;
-		renderStatus();
+		else
+		{
+			IDArray = data.ids;
+			SeriesNameArray = data.names;
+			renderStatus();
+		}
 	});
+	
 }
 
-function setStorage(value){
-	chrome.storage.sync.set({secretMessage: value}, function() {
-		console.log("Secret message saved");
+function setStorage(){
+	chrome.storage.sync.set({ids: IDArray, names: SeriesNameArray}, function() {
+		console.log("Episode List saved");
 	}); 
 }
 
-function renderStatus(statusText) {
-	document.getElementById('status').textContent = "";
-	for	(index = 0; index < TestArray.length; index++) 
+function renderStatus() {
+	document.getElementById('status').innerHTML = "";
+	for	(index = 0; index < IDArray.length; index++) 
 	{
-		document.getElementById('status').textContent += TestArray[index] + " \n";
+		document.getElementById('status').innerHTML += formattedId(index)//IDArray[index] + " \n";
 	}
+	for	(clickindex = 0; clickindex < IDArray.length; clickindex++) 
+	{
+		document.getElementById("RemoveButtonIndex" + clickindex).addEventListener("click", (function(index){
+				return function() { 
+						var id = "RemoveButtonIndex" + index;
+						console.log("RemoveClick:", id);
+						IDArray.splice(index, 1);
+						SeriesNameArray.splice(index, 1);
+						setStorage(IDArray);		
+						getStorage();
+					}
+				})(clickindex));
+	}
+}
+
+function formattedId(index)
+{
+	return "<div class=\"well well-sm\">" + SeriesNameArray[index] 
+	+ "<button type=\"button\" class=\"btn btn-danger btn-xs pull-right\" id=\"RemoveButtonIndex" 
+	+ index 
+	+ "\"><span class=\"glyphicon glyphicon-minus \" aria-hidden=\"true\"></span></button></div>";
 }
 
 //Play ID.
@@ -54,7 +84,7 @@ function renderStatus(statusText) {
 
 function playRandom()
 {
-	var item = TestArray[Math.floor(Math.random()*TestArray.length)];
+	var item = IDArray[Math.floor(Math.random()*IDArray.length)];
 	var id = item;
 	chrome.tabs.create({"url":"http://www.netflix.com/WiPlayer?movieid=" + id,"selected":true}, function(tab){
         makeRequest(tab.id);
@@ -75,8 +105,9 @@ document.addEventListener('DOMContentLoaded', function() {
 	});
 	
 	document.getElementById("clearbutton").addEventListener("click", function(){
-		TestArray = [];
-		setStorage(TestArray);
+		IDArray = [];
+		SeriesNameArray = [];
+		setStorage();
 		getStorage();
 	});
 	
